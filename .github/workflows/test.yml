@@ -1,0 +1,38 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - "main"
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        ocaml-compiler:
+          - "5.3.0"
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up OCaml ${{ matrix.ocaml-compiler }} on ${{ matrix.os }}
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+          dune-cache: true
+
+      - name: Lock dune packages
+        run: opam exec -- dune pkg lock
+        shell: bash
+
+      - name: Run tests
+        run: |
+          opam exec -- dune runtest
+        shell: bash
